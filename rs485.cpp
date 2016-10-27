@@ -26,6 +26,12 @@ SOFTWARE.
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 
+// if this is defined, then the pulse length calculation assumes linear
+// trimpot connected to ADC2. if not defined, then the code assumes
+// that dip switches with 4 resistor voltage divider are connected to
+// ADC2
+#define TRIMPOT
+
 // on beginning of start bit enable driver, turn on led, and set up
 // timer to fire after 12 bit transmit times. This is for worst case
 // where zero byte is transmitted and driver needs to be enabled for
@@ -50,6 +56,12 @@ SOFTWARE.
 // note that fuses must be set to run at 9.6 MHz internal clock at full speed
 
 uint8_t ticktable[]={1,2,3,6,12,24,47,94};
+
+// these are switchover points for resistive divider made with
+// dip switches and 4 resistors. higher position results in lower
+// ADC count, so anything above 919 is position 0, between 748 and 919
+// is position 1 and so on
+uint16_t positiontable[]={919,748,632,547,482,431,390,185};
 
 // this is computed in main loop from ADC2 value, but set
 // a default until first ADC cycle completes
@@ -111,6 +123,7 @@ See http://www.nomad.ee/micros/rs485/ for hardware info
 int main(void)
 {
 uint16_t av;
+uint8_t i;
   MCUSR=0;
   MCUCR=0;
   // I/O directions and initial state
@@ -142,9 +155,18 @@ uint16_t av;
     if (ADCSRA&(1<<ADIF)) {
       av=ADCL;
       av|=(ADCH<<8);
+      #ifdef TRIMPOT
       av=(av>>7)&7; // keep just top 3 bits
       pulseticks=256-ticktable[av];      
       ADCSRA=(1<<ADEN)|(1<<ADSC)|(1<<ADIF)|7;
+      #else
+      for (i=0;i<7;i++) {
+        if (av>positiontable[i]) {
+          break;
+        }
+      }
+      pulseticks=256-ticktable[i];
+      #endif
     }
   }
 }

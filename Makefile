@@ -33,9 +33,6 @@ LD=avr-g++
 CFLAGS=-I. $(INCLUDEDIRS) -g -mmcu=$(GCCDEVICE) -Os \
 	-fpack-struct -fshort-enums             \
 	-funsigned-bitfields -funsigned-char -Wall \
-	-DBEAMBUS_DATETIME_DISABLED \
-	-DBEAMBUS_NORECEIVERCONTROL \
-	-DBEAMBUS_NOCRC16
 
 CXXFLAGS=$(CFLAGS) -fno-exceptions -DF_CPU=$(F_CPU)
 
