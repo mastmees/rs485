@@ -123,7 +123,6 @@ See http://www.nomad.ee/micros/rs485/ for hardware info
 int main(void)
 {
 uint16_t av;
-uint8_t i;
   MCUSR=0;
   MCUCR=0;
   // I/O directions and initial state
@@ -132,9 +131,9 @@ uint8_t i;
   // configure sleep mode
   set_sleep_mode(SLEEP_MODE_IDLE);
   sleep_enable();
-  // configure watchdog to interrupt&reset, 4 sec timeout
-  WDTCR|=0x18;
-  WDTCR=0xe8;
+  // configure watchdog
+  WDTCR=(1<<WDE) | (1<<WDCE);
+  WDTCR=(1<<WDE) | (1<<WDTIE) | (1<<WDP2) | (1<<WDP1) | (1<<WDP0) ; // 2sec timout, interrupt+reset
   // set up for external interrupts
   MCUCR=0x02; // falling edge on INT0 causes interrupt
   GIMSK=0x40; // enable INT0 interrupts
@@ -146,7 +145,7 @@ uint8_t i;
   while (1) {
     sleep_cpu(); // any interrupt wakes us up
     wdt_reset();
-    WDTCR|=0x40;
+    WDTCR=(1<<WDTIE) | (1<<WDP2) | (1<<WDP1) | (1<<WDP0) ; // 2sec timout, interrupt+reset
     // if ADC has finished conversion, then
     // compute the driver enable pulse time
     // as set by trimpot. take out this part
